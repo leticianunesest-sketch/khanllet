@@ -1,0 +1,6 @@
+{
+  "name": "Ofertas Shopee - Clube de Descontos e Cupons",
+  "description": "Cadastre-se gratuitamente para receber as melhores oportunidades, cupons e ofertas imperdíveis da Shopee direto no seu WhatsApp.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

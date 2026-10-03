@@ -1,0 +1,22 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --color-shopee-primary: #EE4D2D;
+  --color-shopee-hover: #D73211;
+  --color-shopee-bg: #FFF3EE;
+  --color-shopee-light: #FFECE2;
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(238, 77, 45, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 12px rgba(238, 77, 45, 0);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 2.5s infinite;
+}
