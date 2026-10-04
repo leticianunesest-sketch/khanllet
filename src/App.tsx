@@ -7,7 +7,6 @@ import { useState, useEffect } from 'react';
 import { PageView } from './types';
 import { CapturePage } from './components/CapturePage';
 import { ThankYouPage } from './components/ThankYouPage';
-import { AdminConfigModal } from './components/AdminConfigModal';
 import { getLatestLead } from './utils/storage';
 
 export default function App() {
@@ -25,8 +24,6 @@ export default function App() {
     const latest = getLatestLead();
     return latest?.name || '';
   });
-
-  const [isConfigOpen, setIsConfigOpen] = useState(false);
 
   // Sync with browser back/forward buttons
   useEffect(() => {
@@ -64,23 +61,13 @@ export default function App() {
       {currentView === 'capture' ? (
         <CapturePage
           onSuccess={handleCaptureSuccess}
-          onOpenConfig={() => setIsConfigOpen(true)}
         />
       ) : (
         <ThankYouPage
           leadName={leadName}
           onBackToHome={() => navigateTo('capture')}
-          onOpenConfig={() => setIsConfigOpen(true)}
         />
       )}
-
-      {/* Admin configuration modal */}
-      <AdminConfigModal
-        isOpen={isConfigOpen}
-        onClose={() => setIsConfigOpen(false)}
-        onNavigateTo={navigateTo}
-        currentView={currentView}
-      />
     </div>
   );
 }

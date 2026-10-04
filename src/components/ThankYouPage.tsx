@@ -3,27 +3,19 @@ import {
   CheckCircle2, 
   ArrowRight, 
   MessageSquare, 
-  BellRing, 
   ShieldCheck, 
-  Lock, 
-  Sparkles, 
-  ExternalLink,
-  ChevronLeft,
-  Settings,
-  Share2
+  ChevronLeft
 } from 'lucide-react';
 import { getWhatsAppGroupLink } from '../utils/storage';
 
 interface ThankYouPageProps {
   leadName?: string;
   onBackToHome: () => void;
-  onOpenConfig: () => void;
 }
 
 export const ThankYouPage: React.FC<ThankYouPageProps> = ({ 
   leadName, 
-  onBackToHome, 
-  onOpenConfig 
+  onBackToHome 
 }) => {
   const [copied, setCopied] = useState(false);
   const whatsappLink = getWhatsAppGroupLink();
@@ -50,15 +42,6 @@ export const ThankYouPage: React.FC<ThankYouPageProps> = ({
         >
           <ChevronLeft className="w-4 h-4" />
           <span>Voltar ao início</span>
-        </button>
-
-        <button
-          onClick={onOpenConfig}
-          className="text-stone-400 hover:text-stone-700 text-xs font-medium px-2.5 py-1.5 rounded-lg border border-stone-200 bg-white hover:bg-stone-50 transition-colors shadow-2xs flex items-center gap-1.5"
-          title="Alterar o link do grupo do WhatsApp"
-        >
-          <Settings className="w-3.5 h-3.5 text-stone-500" />
-          <span>Configurar Link</span>
         </button>
       </header>
 

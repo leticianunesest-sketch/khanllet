@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   Sparkles, 
   ShieldCheck, 
@@ -10,10 +10,9 @@ import {
   Check, 
   Percent, 
   Clock, 
-  TrendingUp,
-  User,
-  Mail,
-  Phone
+  User, 
+  Mail, 
+  Phone 
 } from 'lucide-react';
 import { formatWhatsApp, isValidEmail, isValidWhatsApp } from '../utils/formatters';
 import { saveLead } from '../utils/storage';
@@ -21,15 +20,20 @@ import heroImage from '../assets/images/shopee_deals_hero_1791038845311.jpg';
 
 interface CapturePageProps {
   onSuccess: (leadName: string) => void;
-  onOpenConfig: () => void;
 }
 
-export const CapturePage: React.FC<CapturePageProps> = ({ onSuccess, onOpenConfig }) => {
-  const [name, setName] = useState('');
+export const CapturePage: React.FC<CapturePageProps> = ({ onSuccess }) => {
+  const [firstName, setFirstName] = useState('');
+  const [surname, setSurname] = useState('');
   const [email, setEmail] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
-  const [errors, setErrors] = useState<{ name?: string; email?: string; whatsapp?: string }>({});
+  const [errors, setErrors] = useState<{ 
+    firstName?: string; 
+    email?: string; 
+    whatsapp?: string; 
+  }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = formatWhatsApp(e.target.value);
@@ -39,11 +43,15 @@ export const CapturePage: React.FC<CapturePageProps> = ({ onSuccess, onOpenConfi
     }
   };
 
-  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setName(e.target.value);
-    if (errors.name) {
-      setErrors(prev => ({ ...prev, name: undefined }));
+  const handleFirstNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFirstName(e.target.value);
+    if (errors.firstName) {
+      setErrors(prev => ({ ...prev, firstName: undefined }));
     }
+  };
+
+  const handleSurnameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSurname(e.target.value);
   };
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -56,10 +64,10 @@ export const CapturePage: React.FC<CapturePageProps> = ({ onSuccess, onOpenConfi
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const newErrors: { name?: string; email?: string; whatsapp?: string } = {};
+    const newErrors: { firstName?: string; email?: string; whatsapp?: string } = {};
 
-    if (!name.trim() || name.trim().length < 2) {
-      newErrors.name = 'Por favor, digite seu nome completo.';
+    if (!firstName.trim() || firstName.trim().length < 2) {
+      newErrors.firstName = 'Por favor, digite seu nome.';
     }
 
     if (!isValidEmail(email)) {
@@ -76,12 +84,22 @@ export const CapturePage: React.FC<CapturePageProps> = ({ onSuccess, onOpenConfi
     }
 
     setIsSubmitting(true);
+    const fullName = `${firstName.trim()} ${surname.trim()}`.trim();
+    saveLead({ name: fullName, email, whatsapp });
 
-    // Save lead and transition smoothly
+    // Submit natively to hidden iframe so systeme.io registers the subscription
+    if (formRef.current) {
+      try {
+        formRef.current.submit();
+      } catch (err) {
+        console.warn('systeme.io form submission caught:', err);
+      }
+    }
+
+    // Smooth transition to thank you page
     setTimeout(() => {
-      saveLead({ name, email, whatsapp });
       setIsSubmitting(false);
-      onSuccess(name);
+      onSuccess(firstName.trim());
     }, 450);
   };
 
@@ -93,7 +111,7 @@ export const CapturePage: React.FC<CapturePageProps> = ({ onSuccess, onOpenConfi
         <span>Vagas limitadas para o grupo VIP de ofertas e cupons exclusivos da Shopee</span>
       </div>
 
-      {/* Header bar */}
+      {/* Header bar (sem menu de navegação e sem painel de admin) */}
       <header className="w-full max-w-6xl mx-auto px-4 pt-4 pb-2 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <div className="w-10 h-10 rounded-xl bg-[#EE4D2D] flex items-center justify-center shadow-md shadow-orange-500/20 text-white font-black text-xl">
@@ -107,15 +125,6 @@ export const CapturePage: React.FC<CapturePageProps> = ({ onSuccess, onOpenConfi
             <p className="text-[11px] text-stone-500 font-medium">Curadoria diária de cupons & achados</p>
           </div>
         </div>
-
-        <button
-          onClick={onOpenConfig}
-          type="button"
-          title="Configurações e leads"
-          className="text-stone-400 hover:text-stone-700 text-xs font-medium px-2.5 py-1.5 rounded-lg border border-stone-200 bg-white hover:bg-stone-50 transition-colors shadow-2xs flex items-center gap-1.5"
-        >
-          <span>Painel Admin</span>
-        </button>
       </header>
 
       {/* Main hero & form section */}
@@ -203,7 +212,7 @@ export const CapturePage: React.FC<CapturePageProps> = ({ onSuccess, onOpenConfi
 
           </div>
 
-          {/* Right Column: High-converting lead form */}
+          {/* Right Column: Lead capture form integrated with systeme.io */}
           <div className="lg:col-span-5">
             <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-xl shadow-orange-950/5 border border-stone-200/80 relative">
               
@@ -221,43 +230,78 @@ export const CapturePage: React.FC<CapturePageProps> = ({ onSuccess, onOpenConfi
                 </p>
               </div>
 
-              {/* Form */}
-              <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Hidden iframe for background systeme.io subscription without leaving the page */}
+              <iframe 
+                name="hidden_systeme_iframe" 
+                id="hidden_systeme_iframe" 
+                style={{ display: 'none' }} 
+                title="systeme.io Subscribe Target"
+              />
+
+              {/* Form integrated with systeme.io endpoint */}
+              <form 
+                ref={formRef}
+                action="https://systeme.io/embedded/45261770/subscription"
+                method="post"
+                target="hidden_systeme_iframe"
+                onSubmit={handleSubmit} 
+                className="space-y-4"
+              >
                 
-                {/* Nome Field */}
-                <div>
-                  <label htmlFor="name-input" className="block text-xs font-bold uppercase tracking-wider text-stone-700 mb-1.5">
-                    Nome
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-stone-400">
-                      <User className="w-4 h-4" />
+                {/* Nome & Sobrenome (systeme.io: first_name & surname) */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label htmlFor="first_name" className="block text-xs font-bold uppercase tracking-wider text-stone-700 mb-1.5">
+                      Nome
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-stone-400">
+                        <User className="w-4 h-4" />
+                      </div>
+                      <input
+                        id="first_name"
+                        name="first_name"
+                        type="text"
+                        value={firstName}
+                        onChange={handleFirstNameChange}
+                        placeholder="Primeiro nome"
+                        autoComplete="given-name"
+                        disabled={isSubmitting}
+                        className={`w-full pl-10 pr-3.5 py-3 rounded-xl border text-sm sm:text-base font-medium transition-all outline-none ${
+                          errors.firstName 
+                            ? 'border-red-400 bg-red-50/30 text-stone-900 focus:ring-2 focus:ring-red-400/20' 
+                            : 'border-stone-300 bg-stone-50/50 text-stone-900 focus:border-[#EE4D2D] focus:bg-white focus:ring-3 focus:ring-[#EE4D2D]/15'
+                        }`}
+                      />
                     </div>
+                    {errors.firstName && (
+                      <p className="text-xs text-red-500 font-medium mt-1 pl-1">
+                        {errors.firstName}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label htmlFor="surname" className="block text-xs font-bold uppercase tracking-wider text-stone-700 mb-1.5">
+                      Sobrenome
+                    </label>
                     <input
-                      id="name-input"
+                      id="surname"
+                      name="surname"
                       type="text"
-                      value={name}
-                      onChange={handleNameChange}
-                      placeholder="Seu nome completo"
-                      autoComplete="name"
+                      value={surname}
+                      onChange={handleSurnameChange}
+                      placeholder="Sobrenome"
+                      autoComplete="family-name"
                       disabled={isSubmitting}
-                      className={`w-full pl-10 pr-3.5 py-3 rounded-xl border text-sm sm:text-base font-medium transition-all outline-none ${
-                        errors.name 
-                          ? 'border-red-400 bg-red-50/30 text-stone-900 focus:ring-2 focus:ring-red-400/20' 
-                          : 'border-stone-300 bg-stone-50/50 text-stone-900 focus:border-[#EE4D2D] focus:bg-white focus:ring-3 focus:ring-[#EE4D2D]/15'
-                      }`}
+                      className="w-full px-3.5 py-3 rounded-xl border border-stone-300 bg-stone-50/50 text-stone-900 text-sm sm:text-base font-medium transition-all outline-none focus:border-[#EE4D2D] focus:bg-white focus:ring-3 focus:ring-[#EE4D2D]/15"
                     />
                   </div>
-                  {errors.name && (
-                    <p className="text-xs text-red-500 font-medium mt-1 pl-1">
-                      {errors.name}
-                    </p>
-                  )}
                 </div>
 
-                {/* E-mail Field */}
+                {/* E-mail Field (systeme.io: email) */}
                 <div>
-                  <label htmlFor="email-input" className="block text-xs font-bold uppercase tracking-wider text-stone-700 mb-1.5">
+                  <label htmlFor="email" className="block text-xs font-bold uppercase tracking-wider text-stone-700 mb-1.5">
                     E-mail
                   </label>
                   <div className="relative">
@@ -265,7 +309,8 @@ export const CapturePage: React.FC<CapturePageProps> = ({ onSuccess, onOpenConfi
                       <Mail className="w-4 h-4" />
                     </div>
                     <input
-                      id="email-input"
+                      id="email"
+                      name="email"
                       type="email"
                       value={email}
                       onChange={handleEmailChange}
@@ -288,7 +333,7 @@ export const CapturePage: React.FC<CapturePageProps> = ({ onSuccess, onOpenConfi
 
                 {/* WhatsApp Field */}
                 <div>
-                  <label htmlFor="whatsapp-input" className="block text-xs font-bold uppercase tracking-wider text-stone-700 mb-1.5">
+                  <label htmlFor="whatsapp" className="block text-xs font-bold uppercase tracking-wider text-stone-700 mb-1.5">
                     WhatsApp
                   </label>
                   <div className="relative">
@@ -296,7 +341,8 @@ export const CapturePage: React.FC<CapturePageProps> = ({ onSuccess, onOpenConfi
                       <Phone className="w-4 h-4" />
                     </div>
                     <input
-                      id="whatsapp-input"
+                      id="whatsapp"
+                      name="whatsapp"
                       type="tel"
                       value={whatsapp}
                       onChange={handlePhoneChange}
@@ -319,11 +365,11 @@ export const CapturePage: React.FC<CapturePageProps> = ({ onSuccess, onOpenConfi
                 </div>
 
                 {/* High Contrast CTA Button */}
-                <div className="pt-2">
+                <div className="pt-2 f-row">
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full py-4 px-6 rounded-xl bg-[#EE4D2D] hover:bg-[#D73211] active:scale-[0.99] text-white font-extrabold text-base sm:text-lg tracking-wide uppercase transition-all shadow-lg shadow-orange-500/30 hover:shadow-orange-500/45 cursor-pointer disabled:opacity-75 disabled:cursor-wait flex items-center justify-center gap-2 group animate-pulse-glow"
+                    className="btn w-full py-4 px-6 rounded-xl bg-[#EE4D2D] hover:bg-[#D73211] active:scale-[0.99] text-white font-extrabold text-base sm:text-lg tracking-wide uppercase transition-all shadow-lg shadow-orange-500/30 hover:shadow-orange-500/45 cursor-pointer disabled:opacity-75 disabled:cursor-wait flex items-center justify-center gap-2 group animate-pulse-glow"
                   >
                     {isSubmitting ? (
                       <span className="flex items-center gap-2">
